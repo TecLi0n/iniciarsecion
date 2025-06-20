@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TECLION - Login</title>
+  <style>
+    /* Reset básico */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0077cc 0%, #000000 100%);
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #333;
+    }
+    #auth {
+      background: #fff;
+      padding: 40px 30px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      text-align: center;
+    }
+    #auth h2 {
+      color: #0077cc;
+      margin-bottom: 25px;
+      font-weight: 700;
+      font-size: 1.8rem;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      border: 1.8px solid #0077cc;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: #004a99;
+      outline: none;
+    }
+    button {
+      width: 48%;
+      padding: 12px 0;
+      margin: 5px 1%;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      color: white;
+    }
+    #btn-login {
+      background-color: #000000;
+    }
+    #btn-login:hover {
+      background-color: #000000;
+    }
+    #btn-register {
+      background-color: #000000;
+    }
+    #btn-register:hover {
+      background-color: #000000;
+    }
+    #user-info {
+      margin-top: 25px;
+      text-align: left;
+    }
+    #user-info p {
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #0077cc;
+      font-size: 1.1rem;
+    }
+    #user-info button {
+      background-color: #cc0000;
+      width: 100%;
+      margin: 10px 0 0 0;
+    }
+    #user-info button:hover {
+      background-color: #990000;
+    }
+    h3 {
+      margin-top: 20px;
+      font-weight: 700;
+      color: #0077cc;
+    }
+    ul#mensajes-lista {
+      list-style: none;
+      padding-left: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #f9f9f9;
+    }
+    ul#mensajes-lista li {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    ul#mensajes-lista li:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Boton regresar -->
+<a href="index.html" style="
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #ffffff;
+  color: #0077cc;
+  padding: 10px 15px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+">
+  &#8592; Regresar
+</a>
+<section id="auth">
+  <h2>Mi Cuenta</h2>
+  <div id="user-info" style="display:none;">
+    <p id="user-email"></p>
+    <button onclick="logout()">Cerrar sesión</button>
+    <h3>Mensajes</h3>
+    <ul id="mensajes-lista"></ul>
+  </div>
+
+  <div id="login-form">
+    <input type="email" id="login-email" placeholder="Correo electrónico" required>
+    <input type="password" id="login-pass" placeholder="Contraseña" required>
+    <button id="btn-login">Iniciar Sesión</button>
+    <button id="btn-register">Crear Cuenta</button>
+  </div>
+</section>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    onAuthStateChanged, 
+    signOut 
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { 
+    getFirestore, collection, getDocs, query, where 
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFN9-Jl-7KtdktCnC_HLBWV7F4MKBiPZQ",
+    authDomain: "teclion-86b98.firebaseapp.com",
+    projectId: "teclion-86b98",
+    storageBucket: "teclion-86b98.appspot.com",
+    messagingSenderId: "427363254692",
+    appId: "1:427363254692:web:09deb49768af6534f0c131",
+    measurementId: "G-PW0DHYZP2N"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const userInfo = document.getElementById("user-info");
+  const loginForm = document.getElementById("login-form");
+  const userEmailDisplay = document.getElementById("user-email");
+  const mensajesLista = document.getElementById("mensajes-lista");
+
+  async function cargarMensajes(email) {
+    const mensajesRef = collection(db, "mensajes");
+    const q = query(mensajesRef, where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+    mensajesLista.innerHTML = "";
+    querySnapshot.forEach((doc) => {
+      const li = document.createElement("li");
+      li.textContent = doc.data().contenido;
+      mensajesLista.appendChild(li);
+    });
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      userEmailDisplay.textContent = `Bienvenido: ${user.email}`;
+      userInfo.style.display = "block";
+      loginForm.style.display = "none";
+      cargarMensajes(user.email);
+    } else {
+      userInfo.style.display = "none";
+      loginForm.style.display = "block";
+    }
+  });
+
+  document.getElementById("btn-login").addEventListener("click", async () => {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-pass").value;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      alert("Inicio de sesión exitoso");
+    } catch (error) {
+      alert("Error al iniciar sesión: " + error.message);
+    }
+  });
+
+  document.getElementById("btn-register").addEventListener("click", async () => {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-pass").value;
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      alert("Registro exitoso");
+    } catch (error) {
+      alert("Error al registrar: " + error.message);
+    }
+  });
+
+  function logout() {
+    signOut(auth);
+  }
+
+  window.logout = logout;
+</script>
