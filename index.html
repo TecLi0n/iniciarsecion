@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TECLION - Login</title>
   <style>
-    /* Reset básico */
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #0077cc 0%, #000000 100%);
@@ -34,8 +31,7 @@
       font-weight: 700;
       font-size: 1.8rem;
     }
-    input[type="email"],
-    input[type="password"] {
+    input[type="email"], input[type="password"] {
       width: 100%;
       padding: 12px 15px;
       margin-bottom: 20px;
@@ -44,8 +40,7 @@
       font-size: 1rem;
       transition: border-color 0.3s ease;
     }
-    input[type="email"]:focus,
-    input[type="password"]:focus {
+    input[type="email"]:focus, input[type="password"]:focus {
       border-color: #004a99;
       outline: none;
     }
@@ -61,18 +56,10 @@
       transition: background-color 0.3s ease;
       color: white;
     }
-    #btn-login {
-      background-color: #000000;
-    }
-    #btn-login:hover {
-      background-color: #000000;
-    }
-    #btn-register {
-      background-color: #000000;
-    }
-    #btn-register:hover {
-      background-color: #000000;
-    }
+    #btn-login { background-color: #000000; }
+    #btn-login:hover { background-color: #000000; }
+    #btn-register { background-color: #000000; }
+    #btn-register:hover { background-color: #000000; }
     #user-info {
       margin-top: 25px;
       text-align: left;
@@ -112,15 +99,12 @@
       font-size: 0.95rem;
       color: #333;
     }
-    ul#mensajes-lista li:last-child {
-      border-bottom: none;
-    }
+    ul#mensajes-lista li:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
 
-<!-- Boton regresar -->
-<a href="https://teclion.webcindario.com/" style="
+<a href="index.html" style="
   position: absolute;
   top: 20px;
   left: 20px;
@@ -133,10 +117,10 @@
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
-  font-size: 14px;
-">
+  font-size: 14px;">
   &#8592; Regresar
 </a>
+
 <section id="auth">
   <h2>Mi Cuenta</h2>
   <div id="user-info" style="display:none;">
@@ -164,7 +148,7 @@
     signOut 
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { 
-    getFirestore, collection, getDocs, query, where 
+    getFirestore, collection, getDocs, query, where, doc, updateDoc 
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -191,10 +175,20 @@
     const q = query(mensajesRef, where("email", "==", email));
     const querySnapshot = await getDocs(q);
     mensajesLista.innerHTML = "";
-    querySnapshot.forEach((doc) => {
+
+    querySnapshot.forEach(async (docItem) => {
+      const data = docItem.data();
+
+      // Mostrar el mensaje en la lista
       const li = document.createElement("li");
-      li.textContent = doc.data().contenido;
+      li.textContent = data.contenido;
       mensajesLista.appendChild(li);
+
+      // Marcar como leido si no lo estaba
+      if (data.leido === false) {
+        const mensajeDoc = doc(db, "mensajes", docItem.id);
+        await updateDoc(mensajeDoc, { leido: true });
+      }
     });
   }
 
@@ -238,3 +232,7 @@
 
   window.logout = logout;
 </script>
+
+</body>
+</html>
+
