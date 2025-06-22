@@ -98,8 +98,24 @@
       border-bottom: 1px solid #eee;
       font-size: 0.95rem;
       color: #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     ul#mensajes-lista li:last-child { border-bottom: none; }
+    .btn-marcar {
+      background: #0077cc;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .btn-marcar:hover {
+      background: #005fa3;
+    }
   </style>
 </head>
 <body>
@@ -178,17 +194,28 @@
 
     querySnapshot.forEach(async (docItem) => {
       const data = docItem.data();
+      const mensajeId = docItem.id;
 
-      // Mostrar el mensaje en la lista
       const li = document.createElement("li");
-      li.textContent = data.contenido;
-      mensajesLista.appendChild(li);
+      const span = document.createElement("span");
+      span.textContent = data.contenido;
 
-      // Marcar como leido si no lo estaba
-      if (data.leido === false) {
-        const mensajeDoc = doc(db, "mensajes", docItem.id);
-        await updateDoc(mensajeDoc, { leido: true });
+      li.appendChild(span);
+
+      if (!data.leido) {
+        const btn = document.createElement("button");
+        btn.textContent = "Marcar como leido";
+        btn.classList.add("btn-marcar");
+        btn.onclick = async () => {
+          const mensajeDoc = doc(db, "mensajes", mensajeId);
+          await updateDoc(mensajeDoc, { leido: true });
+          btn.remove();
+          alert("Mensaje marcado como leido.");
+        };
+        li.appendChild(btn);
       }
+
+      mensajesLista.appendChild(li);
     });
   }
 
@@ -205,19 +232,31 @@
   });
 
   document.getElementById("btn-login").addEventListener("click", async () => {
-    const email = document.getElementById("login-email").value;
-    const password = document.getElementById("login-pass").value;
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-pass").value.trim();
+
+    if (!email || !password) {
+      alert("Por favor, ingresa correo y contraseña");
+      return;
+    }
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      alert("Inicio de sesión exitoso");
+      // No necesitas alert aquí porque onAuthStateChanged lo maneja
     } catch (error) {
       alert("Error al iniciar sesión: " + error.message);
     }
   });
 
   document.getElementById("btn-register").addEventListener("click", async () => {
-    const email = document.getElementById("login-email").value;
-    const password = document.getElementById("login-pass").value;
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-pass").value.trim();
+
+    if (!email || !password) {
+      alert("Por favor, ingresa correo y contraseña");
+      return;
+    }
+
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       alert("Registro exitoso");
@@ -229,7 +268,6 @@
   function logout() {
     signOut(auth);
   }
-
   window.logout = logout;
 </script>
 
